@@ -10,7 +10,6 @@
   "dependencies": {
     "bulma": "^0.9.4",
     "firebase": "^10.5.0",
-    "uuid": "^9.0.1",
     "vue": "^3.3.4"
   },
   "devDependencies": {

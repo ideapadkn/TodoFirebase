@@ -1,46 +1,45 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { v4 as uuidb4 } from 'uuid'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
+
+const todosCollectionRef = collection(db, "todos")
 
 const todos = ref([])
 const newContent = ref('')
 
-const addTodo = () => {
-  const newTodo = {
-    id: uuidb4(),
-    content: newContent.value,
-    done: false
-  }
-  todos.value.unshift(newTodo)
-  newContent.value = ''
-}
-
-onMounted(async () => {
-  const querySnapshot = await getDocs(collection(db, "todos"));
-  let fbTodos = []
-  setTimeout(() => {
+onMounted(() => {
+  onSnapshot(todosCollectionRef, (querySnapshot) => {
+    const fbTodos = []
     querySnapshot.forEach((doc) => {
-      console.log(doc.id, " => ", doc.data());
       const todo = {
         id: doc.id,
         content: doc.data().content,
         done: doc.data().done
       }
       fbTodos.push(todo)
-      todos.value = fbTodos
-    });
-  }, 3000)
+    })
+    todos.value = fbTodos
+  })
 })
-
-const removeTodo = id => {
-  todos.value = todos.value.filter(todo => todo.id !== id)
+// ADD TODo
+const addTodo = () => {
+  addDoc(todosCollectionRef, {
+    content: newContent.value,
+    done: false
+  })
+  newContent.value = ''
 }
-
+// REMOVE TASK
+const removeTodo = id => {
+  deleteDoc(doc(todosCollectionRef, id))
+}
+// MARK TASK
 const toggleDone = id => {
   const index = todos.value.findIndex(todo => todo.id === id)
-  todos.value[index].done = !todos.value[index].done
+  updateDoc(doc(todosCollectionRef, id), {
+    done: !todos.value[index].done
+  });
 }
 </script>
 
@@ -61,7 +60,8 @@ const toggleDone = id => {
         </p>
       </div>
     </form>
-    <div class="card mb-5" v-for="todo in todos" :key="todo.id" :class="{ 'has-background-success-light': todo.done }">
+    <div v-if="todos.length" class="card mb-5" v-for="todo in todos" :key="todo.id"
+      :class="{ 'has-background-success-light': todo.done }">
       <div class="card-content">
         <div class="content">
           <div class="columns is-mobile is-vcentered">
@@ -79,6 +79,9 @@ const toggleDone = id => {
           </div>
         </div>
       </div>
+    </div>
+    <div class="has-text-centered" v-else>
+      Loading
     </div>
   </div>
 </template>
