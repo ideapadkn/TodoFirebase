@@ -1,6 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { v4 as uuidb4 } from 'uuid'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/firebase'
 
 const todos = ref([])
 const newContent = ref('')
@@ -14,6 +16,23 @@ const addTodo = () => {
   todos.value.unshift(newTodo)
   newContent.value = ''
 }
+
+onMounted(async () => {
+  const querySnapshot = await getDocs(collection(db, "todos"));
+  let fbTodos = []
+  setTimeout(() => {
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
+      const todo = {
+        id: doc.id,
+        content: doc.data().content,
+        done: doc.data().done
+      }
+      fbTodos.push(todo)
+      todos.value = fbTodos
+    });
+  }, 3000)
+})
 
 const removeTodo = id => {
   todos.value = todos.value.filter(todo => todo.id !== id)
