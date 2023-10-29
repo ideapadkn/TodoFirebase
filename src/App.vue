@@ -1,15 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 
-const todosCollectionRef = collection(db, "todos")
+const todosCollectionRef = collection(db, 'todos')
+const todosCollectionQuery = query(todosCollectionRef, orderBy('date', 'desc'))
 
 const todos = ref([])
 const newContent = ref('')
 
 onMounted(() => {
-  onSnapshot(todosCollectionRef, (querySnapshot) => {
+  onSnapshot(todosCollectionQuery, (querySnapshot) => {
     const fbTodos = []
     querySnapshot.forEach((doc) => {
       const todo = {
@@ -26,7 +27,8 @@ onMounted(() => {
 const addTodo = () => {
   addDoc(todosCollectionRef, {
     content: newContent.value,
-    done: false
+    done: false,
+    date: Date.now()
   })
   newContent.value = ''
 }
@@ -65,7 +67,7 @@ const toggleDone = id => {
       <div class="card-content">
         <div class="content">
           <div class="columns is-mobile is-vcentered">
-            <div class="column" :class="{ 'has-text-success line-through': todo.done }">
+            <div contenteditable="on" class="column" :class="{ 'has-text-success line-through': todo.done }">
               {{ todo.content }}
             </div>
             <div class="column is-5 has-text-right">
